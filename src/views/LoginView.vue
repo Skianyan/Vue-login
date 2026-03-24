@@ -67,10 +67,10 @@
           <span v-if="errors.password" class="field-error">{{ errors.password }}</span>
         </div>
 
-        <!-- Credenciales de prueba -->
+        <!-- Credenciales de prueba, testing -->
         <div class="hint-box">
           <span class="hint-label">Credenciales de prueba:</span>
-          <code>admin@vue.com</code> / <code>vue1234</code>
+          <code>ricardo@haroware.com</code> / <code>gjhurie2</code>
         </div>
 
         <!-- Botón submit -->

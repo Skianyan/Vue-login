@@ -1,31 +1,33 @@
-// src/composables/useAuth.js
 import { ref, computed } from 'vue'
 
-// Estado GLOBAL compartido (fuera del composable)
-const _user = ref(null)
-const _token = ref(localStorage.getItem('auth_token') || null)
+const user = ref(JSON.parse(localStorage.getItem('user')))
+const token = ref(localStorage.getItem('token'))
 
 export function useAuth() {
-  const isAuthenticated = computed(() => !!_token.value)
 
-  const user = computed(() => _user.value)
+  const isAuthenticated = computed(() => !!user.value)
 
-  function login(userData, token) {
-    _user.value = userData
-    _token.value = token
-    localStorage.setItem('auth_token', token)
+  function login(u, t) {
+    user.value = u
+    token.value = t
+
+    localStorage.setItem('user', JSON.stringify(u))
+    localStorage.setItem('token', t)
   }
 
   function logout() {
-    _user.value = null
-    _token.value = null
-    localStorage.removeItem('auth_token')
+    user.value = null
+    token.value = null
+
+    localStorage.removeItem('user')
+    localStorage.removeItem('token')
   }
 
   return {
     user,
-    isAuthenticated,
+    token,
+    isAuthenticated, // 🔥 THIS WAS MISSING
     login,
-    logout,
+    logout
   }
 }

@@ -36,7 +36,8 @@
           <RouterLink href="https://router.vuejs.org"
             target="_blank"
             rel="noopener"
-            class="btn btn--ghost"> Ver documentación ↗</RouterLink>
+            class="btn btn--ghost"> Ver documentación ↗
+          </RouterLink>
 
         </div>
       </div>
