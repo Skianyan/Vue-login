@@ -16,6 +16,17 @@
           <span>⚠</span> {{ errorMsg }}
         </div>
       </Transition>
+      
+      <div class="progress-bar">
+        <div
+          class="progress-fill"
+          :style="{ width: progressPercent + '%' }"
+        ></div>
+      </div>
+
+      <p class="progress-label">
+        Completado {{ progressPercent }}%
+      </p>
 
       <form class="login-form" @submit.prevent="handleSignup" novalidate>
 
@@ -57,6 +68,19 @@
           </div>
           <span v-if="errors.password" class="field-error">{{ errors.password }}</span>
         </div>
+        <div v-if="form.password" class="strength-bar">
+        <div
+          v-for="n in 4"
+          :key="n"
+          class="strength-segment"
+          :class="{ active: n <= passwordStrength.score }"
+          :style="n <= passwordStrength.score ? { background: passwordStrength.color } : {}"
+        ></div>
+
+        <span class="strength-label" :style="{ color: passwordStrength.color }">
+          {{ passwordStrength.label }}
+        </span>
+      </div>
 
         <!-- Confirm Password -->
         <div class="field" :class="{ 'field--error': errors.confirm }">
@@ -100,6 +124,7 @@
 import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { supabase } from '@/lib/supabase'
+import { computed } from 'vue'
 
 const router = useRouter()
 
@@ -146,6 +171,36 @@ function validateConfirm() {
     errors.confirm = ''
   }
 }
+
+const passwordStrength = computed(() => {
+  const p = form.password
+  let score = 0
+
+  if (p.length >= 6) score++
+  if (p.length >= 10) score++
+  if (/[A-Z]/.test(p) && /[0-9]/.test(p)) score++
+  if (/[^A-Za-z0-9]/.test(p)) score++
+
+  const levels = [
+    { score: 0, label: '',         color: '#3a3530' },
+    { score: 1, label: 'Débil',    color: '#e07070' },
+    { score: 2, label: 'Regular',  color: '#e8c46e' },
+    { score: 3, label: 'Buena',    color: '#6eb4e8' },
+    { score: 4, label: 'Fuerte',   color: '#6fcf97' },
+  ]
+
+  return levels[score]
+})
+
+const progressPercent = computed(() => {
+  let score = 0
+
+  if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) score += 33
+  if (form.password.length >= 6) score += 33
+  if (form.confirm && form.confirm === form.password) score += 34
+
+  return score
+})
 
 function isFormValid() {
   validateEmail()
