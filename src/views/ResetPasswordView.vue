@@ -32,12 +32,26 @@ const password = ref('')
 const router = useRouter()
 
 async function handleReset() {
-  const { error } = await supabase.auth.updateUser({
-    password: password.value
-  })
+  errorMsg.value = ''
+  isLoading.value = true
 
-  if (!error) {
-    router.push('/login')
+  try {
+    const { error } = await supabase.auth.updateUser({
+      password: password.value
+    })
+
+    if (error) {
+      errorMsg.value = error.message
+      return
+    }
+    
+    await supabase.auth.signOut()
+    await router.replace('/login')
+
+  } catch (err) {
+    errorMsg.value = 'Error al actualizar contraseña.'
+  } finally {
+    isLoading.value = false
   }
 }
 </script>
