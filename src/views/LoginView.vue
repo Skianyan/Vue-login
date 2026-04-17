@@ -20,74 +20,127 @@
         </div>
       </Transition>
 
-      <!-- Formulario -->
-      <form class="login-form" @submit.prevent="handleLogin" novalidate>
+      <!-- Formulario Login -->
+      <Transition name="slide" mode="out-in"></Transition> 
+      
+        <form v-if="!isRecoverMode" class="login-form" @submit.prevent="handleLogin" novalidate>
 
-        <!-- Campo email -->
-        <div class="field" :class="{ 'field--error': errors.email }">
-          <label for="email" class="field-label">Correo electrónico</label>
-          <div class="field-input-wrap">
-            <span class="field-icon">✉</span>
-            <input
-              id="email"
-              v-model.trim="form.email"
-              type="email"
-              class="field-input"
-              placeholder="usuario@ejemplo.com"
-              autocomplete="email"
-              @blur="validateEmail"
-            />
+          <!-- Campo email -->
+          <div class="field" :class="{ 'field--error': errors.email }">
+            <label for="email" class="field-label">Correo electrónico</label>
+            <div class="field-input-wrap">
+              <span class="field-icon">✉</span>
+              <input
+                id="email"
+                v-model.trim="form.email"
+                type="email"
+                class="field-input"
+                placeholder="usuario@ejemplo.com"
+                autocomplete="email"
+                @blur="validateEmail"
+              />
+            </div>
+            <span v-if="errors.email" class="field-error">{{ errors.email }}</span>
           </div>
-          <span v-if="errors.email" class="field-error">{{ errors.email }}</span>
-        </div>
 
-        <!-- Campo contraseña -->
-        <div class="field" :class="{ 'field--error': errors.password }">
-          <label for="password" class="field-label">Contraseña</label>
-          <div class="field-input-wrap">
-            <span class="field-icon">🔑</span>
-            <input
-              id="password"
-              v-model="form.password"
-              :type="showPassword ? 'text' : 'password'"
-              class="field-input"
-              placeholder="••••••••"
-              autocomplete="current-password"
-              @blur="validatePassword"
-            />
+          <!-- Campo contraseña -->
+          <div class="field" :class="{ 'field--error': errors.password }">
+            <label for="password" class="field-label">Contraseña</label>
+            <div class="field-input-wrap">
+              <span class="field-icon">🔑</span>
+              <input
+                id="password"
+                v-model="form.password"
+                :type="showPassword ? 'text' : 'password'"
+                class="field-input"
+                placeholder="••••••••"
+                autocomplete="current-password"
+                @blur="validatePassword"
+              />
+              <button
+                type="button"
+                class="field-toggle"
+                @click="showPassword = !showPassword"
+                :aria-label="showPassword ? 'Ocultar contraseña' : 'Ver contraseña'"
+              >
+                {{ showPassword ? '🙈' : '👁' }}
+              </button>
+            </div>
+            <span v-if="errors.password" class="field-error">{{ errors.password }}</span>
+          </div>
+
+          <!-- Credenciales de prueba, testing -->
+          <div class="hint-box">
+            <span class="hint-label">Credenciales de prueba:</span>
+            <code>ricardo@haroware.com</code> / <code>gjhurie2</code>
+          </div>
+
+          <!-- Botón submit -->
+          <button
+            type="submit"
+            class="btn-submit"
+            :disabled="isLoading"
+            :class="{ 'btn-submit--loading': isLoading }"
+          >
+            <span v-if="!isLoading">Iniciar sesión →</span>
+            <span v-else class="spinner"></span>
+          </button>
+            <span class="hint-box">
+            ¿No tienes cuenta?
+            <RouterLink to="/signup"><code>Crear cuenta</code></RouterLink>
+            </span>
+            <div class="hint-box">
             <button
               type="button"
-              class="field-toggle"
-              @click="showPassword = !showPassword"
-              :aria-label="showPassword ? 'Ocultar contraseña' : 'Ver contraseña'"
+              class="link"
+              @click="isRecoverMode = true"
             >
-              {{ showPassword ? '🙈' : '👁' }}
+              ¿Olvidaste tu contraseña?
+            </button>
+            </div>
+        </form>
+
+          <!-- Formulario Recuperacion -->
+        <form v-else @submit.prevent="handleRecover">
+          
+          <div class="card-header">
+            <h1 class="card-title">Recuperar contraseña</h1>
+            <p class="card-subtitle">
+              Te enviaremos un enlace para restablecerla
+            </p>
+          </div>
+
+          <div v-if="recoverySent" class="success-msg">
+            Revisa tu correo para continuar
+          </div>
+
+          <div class="field">
+            <label class="field-label">Correo electrónico</label>
+            <div class="field-input-wrap">
+              <input
+                v-model="form.email"
+                type="email"
+                class="field-input"
+                placeholder="usuario@ejemplo.com"
+              />
+            </div>
+          </div>
+
+          <button class="btn-submit">
+            Enviar enlace →
+          </button>
+
+          <div class="hint-box">
+            <button
+              type="button"
+              class="link"
+              @click="isRecoverMode = false"
+            >
+              ← Volver a login
             </button>
           </div>
-          <span v-if="errors.password" class="field-error">{{ errors.password }}</span>
-        </div>
 
-        <!-- Credenciales de prueba, testing -->
-        <div class="hint-box">
-          <span class="hint-label">Credenciales de prueba:</span>
-          <code>ricardo@haroware.com</code> / <code>gjhurie2</code>
-        </div>
-
-        <!-- Botón submit -->
-        <button
-          type="submit"
-          class="btn-submit"
-          :disabled="isLoading"
-          :class="{ 'btn-submit--loading': isLoading }"
-        >
-          <span v-if="!isLoading">Iniciar sesión →</span>
-          <span v-else class="spinner"></span>
-        </button>
-          <span class="hint-box">
-          ¿No tienes cuenta?
-          <RouterLink to="/signup"><code>Crear cuenta</code></RouterLink>
-          </span>
-      </form>
+        </form>
     </div>
   </div>
 </template>
@@ -100,6 +153,8 @@ import { supabase } from '@/lib/supabase'
 
 const router = useRouter()
 const { login } = useAuth()
+const isRecoverMode = ref(false)
+const recoverySent = ref(false)
 
 // ── Estado del formulario ──
 const form = reactive({
@@ -145,7 +200,7 @@ function isFormValid() {
 
 
 
-// ── Login simulado ──
+// ── Login  ──
 async function handleLogin() {
   errorMsg.value = ''
 
@@ -171,6 +226,32 @@ async function handleLogin() {
 
   } catch (err) {
     errorMsg.value = 'Error inesperado al iniciar sesión.'
+  } finally {
+    isLoading.value = false
+  }
+}
+// ── Recover  ──
+async function handleRecover() {
+  errorMsg.value = ''
+  isLoading.value = true
+
+  try {
+    const { error } = await supabase.auth.resetPasswordForEmail(
+      form.email,
+      {
+        redirectTo: `${window.location.origin}/reset-password`
+      }
+    )
+
+    if (error) {
+      errorMsg.value = error.message
+      return
+    }
+
+    recoverySent.value = true
+
+  } catch (err) {
+    errorMsg.value = 'Error enviando correo.'
   } finally {
     isLoading.value = false
   }
