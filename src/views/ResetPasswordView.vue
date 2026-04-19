@@ -24,13 +24,24 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'vue-router'
 
-const password = ref('')
 const router = useRouter()
+const password = ref('')
 const errorMsg = ref('') 
+const isLoading = ref(false)
+
+
+onMounted(async () => {
+  const { data } = await supabase.auth.getSession()
+
+  // if link is expired, redirect to main page
+  if (!data.session) {
+    router.replace('/')
+  }
+})
 
 async function handleReset() {
   errorMsg.value = ''
