@@ -30,6 +30,7 @@ import { useRouter } from 'vue-router'
 
 const password = ref('')
 const router = useRouter()
+const errorMsg = ref('') 
 
 async function handleReset() {
   errorMsg.value = ''
@@ -44,8 +45,8 @@ async function handleReset() {
       errorMsg.value = error.message
       return
     }
-    
     await supabase.auth.signOut()
+
     await router.replace('/login')
 
   } catch (err) {
