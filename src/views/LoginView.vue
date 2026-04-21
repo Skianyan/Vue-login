@@ -126,8 +126,10 @@
             </div>
           </div>
 
-          <button class="btn-submit">
-            Enviar enlace →
+          <button class="btn-submit" :disabled="isLoading || recoverCooldown > 0">
+            <span v-if="isLoading" class="spinner"></span>
+            <span v-else-if="recoverCooldown > 0">Reintentar en {{ recoverCooldown }}s</span>
+            <span v-else>Enviar enlace →</span>
           </button>
 
           <div class="hint-box">
@@ -146,7 +148,7 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '@/composables/useAuth'
 import { supabase } from '@/lib/supabase'
@@ -170,6 +172,8 @@ const errors = reactive({
 const showPassword = ref(false)
 const isLoading = ref(false)
 const errorMsg = ref('')
+const recoverCooldown = ref(0)
+let recoverTimer = null
 
 // ── Validaciones individuales ──
 function validateEmail() {
@@ -232,6 +236,11 @@ async function handleLogin() {
 }
 // ── Recover  ──
 async function handleRecover() {
+  if (recoverCooldown.value > 0) {
+    errorMsg.value = `Espera ${recoverCooldown.value}s antes de reenviar.`
+    return
+  }
+
   errorMsg.value = ''
   isLoading.value = true
 
@@ -249,6 +258,7 @@ async function handleRecover() {
     }
 
     recoverySent.value = true
+    startRecoverCooldown(45)
 
   } catch (err) {
     errorMsg.value = 'Error enviando correo.'
@@ -256,4 +266,66 @@ async function handleRecover() {
     isLoading.value = false
   }
 }
+
+function startRecoverCooldown(seconds = 45) {
+  if (recoverTimer) {
+    clearInterval(recoverTimer)
+  }
+
+  recoverCooldown.value = seconds
+
+  recoverTimer = setInterval(() => {
+    recoverCooldown.value -= 1
+
+    if (recoverCooldown.value <= 0) {
+      recoverCooldown.value = 0
+      clearInterval(recoverTimer)
+      recoverTimer = null
+    }
+  }, 1000)
+}
+
+onUnmounted(() => {
+  if (recoverTimer) {
+    clearInterval(recoverTimer)
+    recoverTimer = null
+  }
+})
 </script>
+
+<style scoped>
+.hint-box {
+  margin-top: 0.85rem;
+  display: flex;
+  justify-content: center;
+}
+
+.link {
+  border: 1px solid transparent;
+  background: transparent;
+  color: #c8a96e;
+  font-size: 0.92rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  padding: 0.45rem 0.75rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.link:hover {
+  color: #e8e4dc;
+  border-color: rgba(200, 169, 110, 0.45);
+  background: rgba(200, 169, 110, 0.1);
+  transform: translateY(-1px);
+}
+
+.link:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(200, 169, 110, 0.25);
+}
+
+.link:active {
+  transform: translateY(0);
+}
+</style>
