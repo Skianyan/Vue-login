@@ -43,11 +43,47 @@
 </template>
 
 <script setup>
+import { onMounted, onUnmounted } from 'vue'
 import { RouterLink, RouterView, useRouter } from 'vue-router'
 import { useAuth } from '@/composables/useAuth'
+import { supabase } from '@/lib/supabase'
 
 const router = useRouter()
 const { isAuthenticated, user, logout } = useAuth()
+
+const { data: authListener } = supabase.auth.onAuthStateChange(async (event) => {
+  if (event !== 'PASSWORD_RECOVERY') return
+
+  await router.replace('/reset-password')
+})
+
+onMounted(async () => {
+  // Recovery links can land at "/#...&type=recovery" (root path).
+  // Route to reset view even if Supabase already consumed the hash.
+  const hash = window.location.hash
+  if (!hash.startsWith('#')) return
+
+  const params = new URLSearchParams(hash.slice(1))
+  const type = params.get('type')
+  const hasRecoveryTokens = !!params.get('access_token') && !!params.get('refresh_token')
+
+  if (type !== 'recovery') return
+
+  if (hasRecoveryTokens) {
+    await supabase.auth.setSession({
+      access_token: params.get('access_token'),
+      refresh_token: params.get('refresh_token'),
+    })
+  }
+
+  // Clean sensitive tokens from URL and force reset-password screen.
+  window.history.replaceState({}, document.title, window.location.pathname + window.location.search)
+  await router.replace('/reset-password')
+})
+
+onUnmounted(() => {
+  authListener?.subscription?.unsubscribe()
+})
 
 async function handleLogout() {
   logout()
